@@ -1,0 +1,162 @@
+# ============================================================================
+# OpenClaw — Hardened Docker Compose (your repo)
+# ============================================================================
+# Image is built automatically from OPENCLAW_REPO (default: ../openclaw) on first run.
+# Custom skills in ./skills/ are mounted as managed skills (~/.openclaw/skills).
+# ============================================================================
+
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
+    build:
+      context: ${OPENCLAW_REPO:-../openclaw}
+      dockerfile: Dockerfile
+    container_name: openclaw-gateway
+
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+          pids: 512
+        reservations:
+          memory: 512m
+
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /var/tmp:size=128m,mode=1777
+      - /run:size=64m
+
+    # .env.local: secrets that need direct injection (e.g. XAI_API_KEY on Windows).
+    # NOT .env — that contains compose-only vars (paths, ports) that don't belong in the container.
+    env_file:
+      - .env.local
+
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      NODE_ENV: production
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CURSOR_API_KEY: ${CURSOR_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # ANTHROPIC_API_KEY, XAI_API_KEY: loaded from .env.local (env_file) — not substituted here
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN:-}
+      OPENCLAW_DISABLE_BONJOUR: "1"
+      # Point bundled skills to our mounted skills dir
+      OPENCLAW_BUNDLED_SKILLS_DIR: /home/node/.openclaw/skills
+
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-~/.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-~/.openclaw/workspace}:/home/node/.openclaw/workspace
+      # Custom skills (this repo) — available as both managed and bundled
+      - ./skills:/home/node/.openclaw/skills:ro
+      - ./skills:/app/skills:ro
+      # HCM repo for hcm-agent skill
+      - ${HCM_REPO:-C:\sandpit\hcm}:/mnt/hcm
+
+    ports:
+      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+
+    init: true
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "node", "dist/index.js", "health", "--token", "${OPENCLAW_GATEWAY_TOKEN}"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--allow-unconfigured",
+        "--bind",
+        "${OPENCLAW_GATEWAY_BIND:-lan}",
+        "--port",
+        "18789",
+      ]
+
+    networks:
+      - openclaw-internal
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  openclaw-cli:
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
+    build:
+      context: ${OPENCLAW_REPO:-../openclaw}
+      dockerfile: Dockerfile
+    container_name: openclaw-cli
+
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "1000:1000"
+
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+          pids: 256
+
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /var/tmp:size=64m,mode=1777
+
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      BROWSER: echo
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
+      OPENCLAW_DISABLE_BONJOUR: "1"
+
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-~/.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-~/.openclaw/workspace}:/home/node/.openclaw/workspace
+
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+
+    networks:
+      - openclaw-internal
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  openclaw-internal:
+    driver: bridge
+    internal: false
