@@ -1,0 +1,12 @@
+{
+  "anthropic:default": {
+    "provider": "anthropic",
+    "mode": "api_key",
+    "keyRef": { "source": "env", "id": "ANTHROPIC_API_KEY" }
+  },
+  "xai:default": {
+    "provider": "xai",
+    "mode": "api_key",
+    "keyRef": { "source": "env", "id": "XAI_API_KEY" }
+  }
+}

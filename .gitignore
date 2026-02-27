@@ -5,7 +5,7 @@
 *.bak.*
 
 # Persisted data (config, DB, workspace) — back up before blasting image
-data/
+
 
 # OS
 .DS_Store

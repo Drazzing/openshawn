@@ -28,7 +28,20 @@ export OPENCLAW_CONFIG_DIR OPENCLAW_WORKSPACE_DIR
 # Ensure gateway config exists (skills + allowInsecureAuth for token-only UI)
 CONFIG_JSON="${OPENCLAW_CONFIG_DIR}/openclaw.json"
 CONFIG_TEMPLATE="${ROOT_DIR}/openclaw.secure.json"
-if [[ ! -f "$CONFIG_JSON" && -f "$CONFIG_TEMPLATE" ]]; then
+DEVELOPER_CONFIG="${ROOT_DIR}/openclaw.developer.json"
+DATA_DIR="${ROOT_DIR}/data"
+# If using repo data dir and developer config exists, use it so Claw picks up best config for developers
+if [[ -f "$DEVELOPER_CONFIG" ]]; then
+  CONFIG_DIR_RESOLVED="$(cd "$OPENCLAW_CONFIG_DIR" 2>/dev/null && pwd)" || true
+  DATA_DIR_RESOLVED="$(cd "$DATA_DIR" 2>/dev/null && pwd)" || true
+  if [[ -n "${CONFIG_DIR_RESOLVED:-}" && -n "${DATA_DIR_RESOLVED:-}" && "$CONFIG_DIR_RESOLVED" = "$DATA_DIR_RESOLVED" ]]; then
+    cp "$DEVELOPER_CONFIG" "$CONFIG_JSON"
+    echo "Using developer config (openclaw.developer.json) for Claw."
+  elif [[ ! -f "$CONFIG_JSON" && -f "$CONFIG_TEMPLATE" ]]; then
+    cp "$CONFIG_TEMPLATE" "$CONFIG_JSON"
+    echo "Created $CONFIG_JSON from openclaw.secure.json (skills + token-only UI)."
+  fi
+elif [[ ! -f "$CONFIG_JSON" && -f "$CONFIG_TEMPLATE" ]]; then
   cp "$CONFIG_TEMPLATE" "$CONFIG_JSON"
   echo "Created $CONFIG_JSON from openclaw.secure.json (skills + token-only UI)."
 fi

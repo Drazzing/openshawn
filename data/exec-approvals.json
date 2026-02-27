@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "socket": {
+    "path": "/home/node/.openclaw/exec-approvals.sock",
+    "token": "4qtWQL7njQN5Wh57ygaodjQiA4E3vRMm"
+  },
+  "defaults": {},
+  "agents": {}
+}

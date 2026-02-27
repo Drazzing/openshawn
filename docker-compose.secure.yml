@@ -50,7 +50,9 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       CURSOR_API_KEY: ${CURSOR_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      # ANTHROPIC_API_KEY, XAI_API_KEY: loaded from .env.local (env_file) — not substituted here
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      # Additional secrets from .env.local (env_file)
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
       SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
@@ -66,7 +68,7 @@ services:
       - ./skills:/home/node/.openclaw/skills:ro
       - ./skills:/app/skills:ro
       # HCM repo for hcm-agent skill
-      - ${HCM_REPO:-C:\sandpit\hcm}:/mnt/hcm
+      - ${HCM_REPO:-C:\sandpit\hcm}:/hcm:rw
 
     ports:
       - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
@@ -76,11 +78,11 @@ services:
     restart: unless-stopped
 
     healthcheck:
-      test: ["CMD", "node", "dist/index.js", "health", "--token", "${OPENCLAW_GATEWAY_TOKEN}"]
-      interval: 60s
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:18789/ || exit 1"]
+      interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
 
     command:
       [

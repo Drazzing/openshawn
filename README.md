@@ -9,6 +9,7 @@ This repo holds **your** secure Docker setup and **custom skills** (e.g. HCM age
 | `docker-compose.secure.yml` | Hardened Compose; mounts `./skills` as managed skills |
 | `.env.secure` | Template for secrets → copy to `.env` |
 | `openclaw.secure.json` | Gateway config → copy to `~/.openclaw/openclaw.json` |
+| `openclaw.developer.json` | **Developer-optimized config** (Claude primary, 2h timeout, coding/cursor skills). Used automatically when `OPENCLAW_CONFIG_DIR` is this repo’s `data/`. |
 | `secure-setup.sh` | One-time setup (WSL2/Linux/macOS) |
 | `docker-start-secure.ps1` | Start gateway (Windows PowerShell) |
 | `scripts/docker-start-secure.sh` | Start gateway (WSL2/Linux/macOS) |

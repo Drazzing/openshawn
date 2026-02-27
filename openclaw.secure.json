@@ -1,4 +1,9 @@
 {
+  "auth": {
+    "order": {
+      "anthropic": ["anthropic:default"]
+    }
+  },
   "models": {
     "providers": {
       "xai": {
@@ -36,7 +41,7 @@
         "model": "gemini-embedding-001",
         "remote": { "apiKey": "${GEMINI_API_KEY}" }
       },
-      "model": { "primary": "google/gemini-2.0-flash", "fallbacks": [ "xai/grok-4-latest", "anthropic/claude-opus-4-6" ] },
+      "model": { "primary": "anthropic/claude-3-5-haiku-latest", "fallbacks": [ "anthropic/claude-opus-4-6", "xai/grok-4-latest" ] },
       "models": { "google/gemini-2.0-flash": {}, "xai/grok-4-latest": { "alias": "Grok" }, "xai/grok-4": {}, "anthropic/claude-opus-4-6": {} },
       "sandbox": {
         "mode": "non-main",

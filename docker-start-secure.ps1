@@ -46,13 +46,21 @@ if (-not (Test-Path $env:OPENCLAW_WORKSPACE_DIR)) { New-Item -ItemType Directory
 # Optional .env.local for secrets that don't load from .env (e.g. XAI_API_KEY on Windows)
 $envLocal = Join-Path $RootDir ".env.local"
 if (-not (Test-Path $envLocal)) {
-    Set-Content -Path $envLocal -Value "# Add secrets here (overrides .env). Example: XAI_API_KEY=your_key" -Encoding UTF8
-    Write-Host "Created .env.local (add XAI_API_KEY=yourkey here if Grok key does not load from .env)." -ForegroundColor DarkGray
+    Set-Content -Path $envLocal -Value "# Add secrets here (overrides .env). Examples:`n# ANTHROPIC_API_KEY=sk-ant-...`n# XAI_API_KEY=your_key" -Encoding UTF8
+    Write-Host "Created .env.local (add ANTHROPIC_API_KEY and/or XAI_API_KEY here if keys do not load from .env)." -ForegroundColor DarkGray
 }
 # Ensure gateway config exists (skills + allowInsecureAuth for token-only UI)
 $configJson = Join-Path $env:OPENCLAW_CONFIG_DIR "openclaw.json"
 $configTemplate = Join-Path $RootDir "openclaw.secure.json"
-if (-not (Test-Path $configJson) -and (Test-Path $configTemplate)) {
+$developerConfig = Join-Path $RootDir "openclaw.developer.json"
+# If using repo data dir and developer config exists, use it so Claw picks up best config for developers
+$dataDir = Join-Path $RootDir "data"
+$configDirResolved = (Resolve-Path $env:OPENCLAW_CONFIG_DIR -ErrorAction SilentlyContinue).Path
+$dataDirResolved = (Resolve-Path $dataDir -ErrorAction SilentlyContinue).Path
+if ((Test-Path $developerConfig) -and $configDirResolved -and $dataDirResolved -and ($configDirResolved -eq $dataDirResolved)) {
+    Copy-Item $developerConfig $configJson -Force
+    Write-Host "Using developer config (openclaw.developer.json) for Claw." -ForegroundColor Green
+} elseif (-not (Test-Path $configJson) -and (Test-Path $configTemplate)) {
     Copy-Item $configTemplate $configJson
     Write-Host "Created $configJson from openclaw.secure.json (skills + token-only UI)." -ForegroundColor Green
 }
